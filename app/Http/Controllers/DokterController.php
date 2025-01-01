@@ -165,8 +165,53 @@ class DokterController extends Controller
 
     public function periksa_pasien_post(Request $request, $id)
     {
-       
+        // Validasi data yang diterima dari form
+        $data = $request->validate([
+            'keluhan' => 'required|string',
+            'obat_ids' => 'required|array|min:1',
+            'obat_ids.*' => 'exists:obats,id',  // Validasi obat jika ada
+        ]);
+    
+        try {
+            // Ambil data pasien berdasarkan ID
+            $daftarpoli = DaftarPoli::findOrFail($id);
+    
+            // Simpan riwayat pemeriksaan
+            $periksa = new Periksa();
+            $periksa->id_pasien = $daftarpoli->id_pasien; // Asumsi ada relasi pasien di DaftarPoli
+            $periksa->id_dokter = session()->get('id'); // Ambil ID dokter dari session
+            $periksa->keluhan = $data['keluhan'];
+            $periksa->save(); // Simpan data pemeriksaan
+            
+            // Jika ada obat yang diberikan, simpan ke detail pemeriksaan
+            if (isset($data['obat'])) {
+                foreach ($data['obat'] as $obat_id) {
+                    $detailPeriksa = new DetailPeriksa();
+                    $detailPeriksa->id_periksa = $periksa->id;
+                    $detailPeriksa->id_obat = $obat_id;
+                    $detailPeriksa->save();
+                }
+            }
+    
+            // Update status pasien di DaftarPoli jika perlu
+            $daftarpoli->status = 'sudah diperiksa';
+            $daftarpoli->save();
+    
+            return redirect()->route('dokter.periksa-pasien.index')->with('alert', [
+                'type'      => 'success',
+                'title'     => 'Berhasil',
+                'message'   => 'Pemeriksaan pasien berhasil dilakukan'
+            ]);
+        } catch (\Exception $e) {
+            // Menangani kesalahan jika terjadi
+            return redirect()->back()->with('alert', [
+                'type'      => 'error',
+                'title'     => 'Gagal',
+                'message'   => 'Pemeriksaan pasien gagal dilakukan'
+            ]);
+        }
     }
+    
 
     public function periksa_pasien_periksa(Request $request)
     {

@@ -12,8 +12,10 @@ class Dokter extends Model
     protected $table = 'dokters';
     protected $guarded = ['id'];
 
+// Dokter.php (Model)
     public function poli()
     {
-        return $this->belongsTo(Poli::class,'id_poli','id');
+        return $this->belongsTo(Poli::class, 'id'); // memastikan relasi ke tabel poli
     }
+
 }

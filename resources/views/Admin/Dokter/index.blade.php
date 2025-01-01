@@ -117,7 +117,7 @@
                                         <td>{{$polri->nama_dokter}}</td>
                                         <td>{{$polri->alamat}}</td>
                                         <td>{{$polri->no_hp}}</td>
-                                        <td>{{$polri->poli->nama_poli}}</td>
+                                        <td>{{ $polri->poli ? $polri->poli->nama_poli : 'Poli tidak ditemukan' }}</td>
                                         <td>{{$polri->katasandi}}</td>
                                         <td>
                                             <div class="d-flex justify-content">

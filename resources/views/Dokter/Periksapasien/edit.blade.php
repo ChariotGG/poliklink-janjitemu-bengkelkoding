@@ -28,7 +28,7 @@
                             <h3 class="card-title">Detail Pemeriksaan Pasien</h3>
                         </div>
 
-                        <form action="{{ url('dokter/riwayat-poli/aow' ) }}" method="POST">
+                        <form action="{{ url('dokter/riwayat-poli/' . $daftarpoli->id . '/aow') }}" method="POST">
                             @csrf
 
                             <input type="hidden" name="id_daftar_poli" value="{{$daftarpoli->id}}">
@@ -41,12 +41,15 @@
 
                                 <div class="form-group">
                                     <label for="tanggal_periksa">Tanggal Pemeriksaan</label>
-                                    <input type="date" class="form-control" value="tgl_periksa">
+                                    <input type="date" class="form-control" name="tanggal_periksa" value="{{ old('tanggal_periksa', now()->toDateString()) }}">
                                 </div>
 
                                 <div class="form-group">
                                     <label for="catatan">Catatan Pemeriksaan</label>
-                                    <textarea name="catatan" class="form-control" rows="3" placeholder="Masukkan catatan pemeriksaan"></textarea>
+                                    <textarea name="catatan" class="form-control" rows="3" placeholder="Masukkan catatan pemeriksaan">{{ old('catatan') }}</textarea>
+                                    @if ($errors->has('catatan'))
+                                        <div class="text-danger">{{ $errors->first('catatan') }}</div>
+                                    @endif
                                 </div>
 
                                 <div class="form-group">
