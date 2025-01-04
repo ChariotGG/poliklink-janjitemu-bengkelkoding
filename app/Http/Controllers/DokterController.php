@@ -80,6 +80,18 @@ class DokterController extends Controller
             'jam_selesai'   => 'required'
         ]);
 
+        $jadwal = JadwalPeriksa::where('id_dokter', session()->get('id'))
+        ->where('hari', $request->hari)
+        ->first();
+
+        if ($jadwal) {
+            return redirect()->back()->with('alert', [
+                'type' => 'error',
+                'title' => 'Gagal, Anda sudah memiliki jadwal periksa pada hari ini',
+                'message' => 'Anda sudah memiliki jadwal periksa pada hari ini',
+            ]);
+        }
+
         try{
             $data['status'] = 1;
             JadwalPeriksa::create($data);
