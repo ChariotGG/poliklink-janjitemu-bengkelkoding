@@ -80,18 +80,6 @@ class DokterController extends Controller
             'jam_selesai'   => 'required'
         ]);
 
-        $jadwal = JadwalPeriksa::where('id_dokter', session()->get('id'))
-        ->where('hari', $request->hari)
-        ->first();
-
-        if ($jadwal) {
-            return redirect()->back()->with('alert', [
-                'type' => 'error',
-                'title' => 'Gagal, Anda sudah memiliki jadwal periksa pada hari ini',
-                'message' => 'Anda sudah memiliki jadwal periksa pada hari ini',
-            ]);
-        }
-
         try{
             $data['status'] = 1;
             JadwalPeriksa::create($data);
@@ -162,9 +150,12 @@ class DokterController extends Controller
         $dokter = session()->get('id'); 
         $jadwal_periksa = JadwalPeriksa::where('id_dokter', $dokter)->first(); 
         $pasien_periksa = DaftarPoli::where('id_jadwal', $jadwal_periksa->id)->get();
+
+        $sudah_periksa = Periksa::get();
     
         return view($this->views.'Periksapasien.index', [
             'pasien_periksa' => $pasien_periksa,
+            'sudah_periksa' => $sudah_periksa
         ]);
     }
 
@@ -175,56 +166,44 @@ class DokterController extends Controller
         return view($this->views.'Periksapasien.edit', compact('daftarpoli', 'obat'));
     }
 
-    public function periksa_pasien_post(Request $request, $id)
+    public function periksa_pasien_post(Request $request)
     {
-        // Validasi data yang diterima dari form
-        $data = $request->validate([
-            'keluhan' => 'required|string',
-            'obat_ids' => 'required|array|min:1',
-            'obat_ids.*' => 'exists:obats,id',  // Validasi obat jika ada
-        ]);
+        $data_periksa = [
+            'id_daftar_poli'    => $request->id_daftar_poli,
+            'tanggal_periksa'   => $request->tgl_periksa,
+            'catatan'           => $request->catatan,
+            'biaya_periksa'     => $request->biaya_periksa
+        ];
     
-        try {
-            // Ambil data pasien berdasarkan ID
-            $daftarpoli = DaftarPoli::findOrFail($id);
+        $periksa = Periksa::create($data_periksa);
+        
+        if (is_array($request->obat_ids)) {
+            foreach ($request->obat_ids as $obat_id) {
+               
+                $data_detail = [
+                    'id_periksa' => $periksa->id,
+                    'id_obat'    => $obat_id
+                ];
     
-            // Simpan riwayat pemeriksaan
-            $periksa = new Periksa();
-            $periksa->id_pasien = $daftarpoli->id_pasien; // Asumsi ada relasi pasien di DaftarPoli
-            $periksa->id_dokter = session()->get('id'); // Ambil ID dokter dari session
-            $periksa->keluhan = $data['keluhan'];
-            $periksa->save(); // Simpan data pemeriksaan
-            
-            // Jika ada obat yang diberikan, simpan ke detail pemeriksaan
-            if (isset($data['obat'])) {
-                foreach ($data['obat'] as $obat_id) {
-                    $detailPeriksa = new DetailPeriksa();
-                    $detailPeriksa->id_periksa = $periksa->id;
-                    $detailPeriksa->id_obat = $obat_id;
-                    $detailPeriksa->save();
-                }
+                DetailPeriksa::create($data_detail);
             }
+        } else {
+          
+            $data_detail = [
+                'id_periksa' => $periksa->id,
+                'id_obat'    => $request->obat_ids
+            ];
     
-            // Update status pasien di DaftarPoli jika perlu
-            $daftarpoli->status = 'sudah diperiksa';
-            $daftarpoli->save();
-    
-            return redirect()->route('dokter.periksa-pasien.index')->with('alert', [
-                'type'      => 'success',
-                'title'     => 'Berhasil',
-                'message'   => 'Pemeriksaan pasien berhasil dilakukan'
-            ]);
-        } catch (\Exception $e) {
-            // Menangani kesalahan jika terjadi
-            return redirect()->back()->with('alert', [
-                'type'      => 'error',
-                'title'     => 'Gagal',
-                'message'   => 'Pemeriksaan pasien gagal dilakukan'
-            ]);
+            DetailPeriksa::create($data_detail);
         }
+    
+        return redirect('dokter/periksa-pasien')->with('alert',[
+            'type'      => 'success',
+            'title'     => 'Berhasil',
+            'message'   => 'Berhasil memeriksa'
+        ]);
     }
     
-
     public function periksa_pasien_periksa(Request $request)
     {
         return view($this->views . 'Periksapasien.periksa');
@@ -232,7 +211,24 @@ class DokterController extends Controller
 
     public function riwayat_pasien()
     {
-        return view($this->views . 'Riwayatpasien.index');
+        $dokter = session()->get('id'); 
+        $jadwal_periksa = JadwalPeriksa::where('id_dokter', $dokter)->first(); 
+        $pasien_periksa = DaftarPoli::where('id_jadwal', $jadwal_periksa->id)->get();
+        $riwayat = Periksa::get();
+        return view($this->views . 'Riwayatpasien.index',[
+            'riwayat'   => $riwayat
+        ]);
+    }
+
+    public function riwayat_pasien_show($id)
+    {
+        $riwayat = Periksa::where('id',$id)->first();
+        $obat = DetailPeriksa::get();
+
+        return view($this->views . 'Riwayatpasien.show',[
+            'riwayat'   => $riwayat,
+            'obat'      => $obat
+        ]);
     }
 
     public function profile()

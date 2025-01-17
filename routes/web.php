@@ -46,13 +46,12 @@ Route::controller(DokterController::class)->group(function(){
         Route::put('dokter/periksa-pasien/periksa/{id}','periksa_pasien_periksa_update')->name('dokter.periksa-pasien.periksa-update');
 
         Route::get('dokter/riwayat-pasien','riwayat_pasien')->name('dokter.riwayat-pasien');
+        Route::get('dokter/riwayat-pasien/{id}/show','riwayat_pasien_show')->name('dokter.riwayat-pasien.show');
  
         Route::get('dokter/profile','profile')->name('dokter.profile');
         Route::post('dokter/profile','profile_update')->name('dokter.profile.update');
 
-        Route::post('dokter/riwayat-poli/{id}/aow','periksa_pasien_post');
-
-
+        Route::post('dokter/riwayat-poli/aow','periksa_pasien_post');
     });
 });
 
@@ -86,8 +85,7 @@ Route::controller(AdminController::class)->group(function(){
         Route::post('admin/pasien','pasien_post')->name('pasien-post');
         Route::get('admin/pasien/{id}','pasien_edit')->name('pasien-edit');
         Route::put('admin/pasien/{id}','pasien_update')->name('pasien-update');
-        Route::post('admin/pasien/{id}/delete', [AdminController::class, 'pasien_delete'])->name('pasien-delete');
-
+        Route::post('admin/pasien/{id}/delete','pasien_delete')->name('pasien-delete');
     });
 });
  

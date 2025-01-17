@@ -8,4 +8,9 @@ class DetailPeriksa extends Model
 {
     protected $table = 'detail_periksas';
     protected $guarded = ['id'];
+
+    public function obat()
+    {
+        return $this->belongsTo(Obat::class, 'id_obat');
+    }
 }

@@ -31,11 +31,6 @@
                             <div class="card-tools">
                                 <div class="input-group input-group-sm" style="width: 150px;">
 
-                                    {{-- <div class="input-group-append">
-                                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modalTambahJadwal">
-                                            <i class="fas fa-plus"></i> Tambah Jadwal
-                                        </button>                                        
-                                    </div> --}}
                                 </div>
                             </div>
                         </div>
@@ -60,7 +55,11 @@
                                         <td>{{$polri->pasien->nama ?? 'kosong'}}</td>
                                         <td>{{$polri->keluhan}}</td>
                                         <td>
-                                            <a href="{{ url('dokter/periksa-pasien/' . $polri->id) }}/edit" class="btn btn-primary">Periksa</a>
+                                            @if($sudah_periksa->where('id_daftar_poli',$polri->id)->first())
+                                            <a href="#" >Sudah Periksa</a>
+                                            @else
+                                            <a href="{{ url('dokter/periksa-pasien/' . $polri->id) }}/edit" class="btn btn-primary">periksa</a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @empty
@@ -82,54 +81,5 @@
     </section>
     <!-- /.content -->
 </div>
-
-<!-- Modal Tambah Jadwal -->
-{{-- <div class="modal fade" id="modalTambahJadwal" tabindex="-1" aria-labelledby="modalTambahJadwalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTambahJadwalLabel">Tambah Jadwal</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form action="{{route('dokter.jadwal-periksa.post')}}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="namaDokter">Nama Dokter</label>
-                        <input type="hidden" name="id_dokter" value="{{session()->get('id')}}">
-                        <input type="text"  class="form-control" value="{{session()->get('nama_dokter')}}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="hari">Hari</label>
-                        <select name="hari" id="hari" class="form-control" required>
-                            <option value="">Pilih Hari</option>
-                            <option value="Senin">Senin</option>
-                            <option value="Selasa">Selasa</option>
-                            <option value="Rabu">Rabu</option>
-                            <option value="Kamis">Kamis</option>
-                            <option value="Jumat">Jumat</option>
-                            <option value="Sabtu">Sabtu</option>
-                            <option value="Minggu">Minggu</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="jamMulai">Jam Mulai</label>
-                        <input type="time" name="jam_mulai" class="form-control" id="jamMulai" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="jamSelesai">Jam Selesai</label>
-                        <input type="time" name="jam_selesai" class="form-control" id="jamSelesai" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div> --}}
 
 @endsection
