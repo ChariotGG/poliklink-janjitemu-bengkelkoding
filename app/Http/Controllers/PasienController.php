@@ -9,6 +9,7 @@ use App\Models\JadwalPeriksa;
 use App\Models\Pasien;
 use App\Models\Periksa;
 use App\Models\Poli;
+use App\Models\Konsultasi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,23 +19,23 @@ class PasienController extends Controller
     private $views = 'Pasien.';
     public function login()
     {
-        return view($this->views."Auth.login");
+        return view($this->views . "Auth.login");
     }
 
     public function login_proses(Request $request)
     {
-        $request->validate([ 
+        $request->validate([
             'username'  => 'required',
             'password'  => 'required'
         ]);
 
-        $anonim = Pasien::where('username',$request->username)->first();
-        if($anonim == NULL){
-            return redirect()->back()->with('error','Data Pasien Tidak Ditemukan');
+        $anonim = Pasien::where('username', $request->username)->first();
+        if ($anonim == NULL) {
+            return redirect()->back()->with('error', 'Data Pasien Tidak Ditemukan');
         }
 
-        if(Hash::check($request->password,$anonim->password)== FALSE){
-            return redirect()->back()->with('error','Password Salah');
+        if (Hash::check($request->password, $anonim->password) == FALSE) {
+            return redirect()->back()->with('error', 'Password Salah');
         }
 
         $session = [
@@ -48,7 +49,7 @@ class PasienController extends Controller
         ];
 
         session($session);
-        return redirect()->route('pasien.dashboard')->with('success','Berhasil Login');
+        return redirect()->route('pasien.dashboard')->with('success', 'Berhasil Login');
     }
 
     private function semesta()
@@ -64,7 +65,7 @@ class PasienController extends Controller
 
     public function register()
     {
-        return view($this->views."Auth.register",[
+        return view($this->views . "Auth.register", [
             'urutan'    => $this->semesta()
         ]);
     }
@@ -79,7 +80,7 @@ class PasienController extends Controller
             'no_rm'     => 'required',
             'password'  => 'required',
         ]);
-    
+
         $data = [
             'nama'      => $request->nama,
             'username'  => $request->username,
@@ -90,26 +91,26 @@ class PasienController extends Controller
             'katasandi' => $request->password,
             'role'      => 'pasien'
         ];
-    
+
         Pasien::create($data);
 
-        return redirect()->route('login.pasien')->with('success','Berhasil Mendaftar');
+        return redirect()->route('login.pasien')->with('success', 'Berhasil Mendaftar');
     }
 
     public function logout()
     {
-        session()->forget(['role','isLogin']);
-        return redirect()->route('login.pasien')->with('success','Berhasil Logout');
+        session()->forget(['role', 'isLogin']);
+        return redirect()->route('login.pasien')->with('success', 'Berhasil Logout');
     }
 
     public function dashboard()
     {
-        return view($this->views."Dashboard.index");
+        return view($this->views . "Dashboard.index");
     }
 
     public function poli()
     {
-        return view($this->views."Poli.index",[
+        return view($this->views . "Poli.index", [
             'poli'      => Poli::get(),
         ]);
     }
@@ -131,29 +132,29 @@ class PasienController extends Controller
     public function riwayat_poli()
     {
         $session = session()->get('id');
-    
+
         $daftar_poli = DaftarPoli::where('id_pasien', $session)->get();
-        
+
         $periksa = Periksa::all();
-    
+
         foreach ($daftar_poli as $daftar) {
             $pemeriksaan = $periksa->where('id_daftar_poli', $daftar->id)->first();
-    
+
             if ($pemeriksaan) {
                 $daftar->status_periksa = 'Sudah Diperiksa';
             } else {
                 $daftar->status_periksa = 'Belum Diperiksa';
             }
         }
-    
+
         $pasien = Pasien::where('id', $session)->first();
-    
+
         return view($this->views . "Poli.riwayat", [
             'daftar_poli' => $daftar_poli,
             'pasien' => $pasien
         ]);
     }
-    
+
     public function poli_daftar(Request $request)
     {
         // dd($request->all());
@@ -164,16 +165,16 @@ class PasienController extends Controller
             'no_antrian'    => 'required'
         ]);
 
-        try{
+        try {
             DaftarPoli::create($data);
 
-            return redirect()->route('pasien.poli.riwayat')->with('alert',[
+            return redirect()->route('pasien.poli.riwayat')->with('alert', [
                 'type'      => 'success',
                 'title'     => 'Berhasil',
                 'message'   => 'Berhasil Mendaftar'
             ]);
-        }catch(\Exception $e){
-            return redirect()->back()->with('alert',[
+        } catch (\Exception $e) {
+            return redirect()->back()->with('alert', [
                 'type'     => 'error',
                 'title'     => 'Gagal',
                 'message'   => 'Gagal Mendaftar'
@@ -206,4 +207,82 @@ class PasienController extends Controller
         ]);
     }
 
+    public function konsultasiIndex()
+    {
+        $konsultasi = Konsultasi::where('id_pasien', session()->get('id'))->get();
+        return view('pasien.konsultasi.index', compact('konsultasi'));
+    }
+
+    public function konsultasiCreate()
+    {
+        $dokter = Dokter::all();
+        return view('pasien.konsultasi.create', compact('dokter'));
+    }
+
+
+    public function konsultasiStore(Request $request)
+    {
+        $request->validate([
+            'id_dokter' => 'required',
+            'subject' => 'required|string|max:255',
+            'pertanyaan' => 'required|string',
+        ]);
+
+        Konsultasi::create([
+            'subject' => $request->subject,
+            'pertanyaan' => $request->pertanyaan,
+            'tgl_konsultasi' => now(),
+            'id_pasien' => session()->get('id'),
+            'id_dokter' => $request->id_dokter,
+        ]);
+
+        return redirect()->route('pasien.konsultasi.index')->with('success', 'Pertanyaan berhasil dikirim.');
+    }
+    public function konsultasiEdit($id)
+    {
+        $konsultasi = Konsultasi::findOrFail($id);
+
+        // Pastikan hanya pasien yang membuat konsultasi bisa mengeditnya
+        if ($konsultasi->id_pasien != session()->get('id')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $dokter = Dokter::all(); // List dokter untuk dropdown
+        return view('pasien.konsultasi.edit', compact('konsultasi', 'dokter'));
+    }
+
+    public function konsultasiUpdate(Request $request, $id)
+    {
+        $konsultasi = Konsultasi::findOrFail($id);
+
+        // Pastikan hanya pasien yang membuat konsultasi bisa mengeditnya
+        if ($konsultasi->id_pasien != session()->get('id')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'subject' => 'required|string|max:255',
+            'pertanyaan' => 'required|string',
+        ]);
+
+        $konsultasi->update([
+            'subject' => $request->subject,
+            'pertanyaan' => $request->pertanyaan,
+        ]);
+
+        return redirect()->route('pasien.konsultasi.index')->with('success', 'Pertanyaan berhasil diperbarui.');
+    }
+    public function konsultasiDestroy($id)
+    {
+        $konsultasi = Konsultasi::findOrFail($id);
+
+        // Pastikan hanya pasien yang membuat konsultasi bisa menghapusnya
+        if ($konsultasi->id_pasien != session()->get('id')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $konsultasi->delete();
+
+        return redirect()->route('pasien.konsultasi.index')->with('success', 'Pertanyaan berhasil dihapus.');
+    }
 }
